@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate lazy_static;
+
 mod scrape;
 mod web_driver;
 use colored::Colorize;
@@ -8,7 +11,6 @@ use thirtyfour::{
     prelude::{ElementWaitable, WebDriverError},
     By, DesiredCapabilities, WebDriver, WebElement,
 };
-
 
 #[derive(Debug, Serialize, Default)]
 pub struct JobEntry {
@@ -27,6 +29,17 @@ pub struct JobEntry {
     pub keyworkds: String,
 }
 
+#[derive(Debug, Serialize)]
+pub struct Config {
+    pub raw_data_dir: String,
+}
+
+lazy_static! {
+    pub static ref CONFIG: Mutex<Config> = Mutex::new(Config {
+        raw_data_dir: "data/raw/".to_string(),
+    });
+}
+
 /// Init function check:
 /// 1: if directory data exists, and create it if not
 /// 2: if chromdriver is in the root directory, and panic if not
@@ -40,8 +53,10 @@ pub fn init() -> Result<(), Box<dyn Error>> {
         }
     }
     *has_run = Some(true);
-    if !std::path::Path::new("data").exists() {
-        std::fs::create_dir("data")?;
+
+    let mut config = CONFIG.lock().unwrap();
+    if !std::path::Path::new(&config.raw_data_dir).exists() {
+        std::fs::create_dir_all(&config.raw_data_dir)?;
     }
     if !std::path::Path::new("chromedriver").exists() {
         panic!(
@@ -54,4 +69,3 @@ pub fn init() -> Result<(), Box<dyn Error>> {
     }
     Ok(())
 }
-

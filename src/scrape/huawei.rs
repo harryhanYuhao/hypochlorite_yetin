@@ -12,6 +12,18 @@ use thirtyfour::{
 };
 use url::Url;
 
+
+pub async fn scrape(driver: &WebDriver) -> Result<(), Box<dyn Error>> {
+    let config = crate::CONFIG.lock().unwrap();
+    let save_to = format!("{}/huawei_gb.csv", config.raw_data_dir);
+    scrape_site_uk(
+        driver,
+        "https://huaweiuk.teamtailor.com/jobs",
+        save_to.as_str(),
+    )
+    .await
+}
+
 // for serializing to csv
 async fn job_entry_from_element(element: &WebElement) -> Result<JobEntry, WebDriverError> {
     let title = element.find(By::Css("a > span")).await?.text().await?;
@@ -26,15 +38,6 @@ async fn job_entry_from_element(element: &WebElement) -> Result<JobEntry, WebDri
         apply_link: url,
         ..Default::default() // default defined in main
     })
-}
-
-pub async fn scrape_huawei_job(driver: &WebDriver) -> Result<(), Box<dyn Error>> {
-    scrape_site_uk(
-        driver,
-        "https://huaweiuk.teamtailor.com/jobs",
-        "data/huawei_gb.csv", //save to location
-    )
-    .await
 }
 
 async fn scrape_site_uk(

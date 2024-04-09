@@ -9,6 +9,7 @@ use thirtyfour::{
     By, DesiredCapabilities, WebDriver, WebElement,
 };
 use hypochlorite::JobEntry;
+use hypochlorite::CONFIG;
 
 
 #[tokio::main]
@@ -19,8 +20,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let _kill_guard = web_driver::KillChildGuard;
     let driver = web_driver::initialize_driver(false).await?;
     scrape::short_pause();
-    // scrape::huawei::scrape_huawei_job(&driver).await?;
-    scrape::amd::scrape_amd_job(&driver).await?;
+    scrape::huawei::scrape(&driver).await?;
+    scrape::amd::scrape(&driver).await?;
     driver.quit().await?;
     Ok(())
 }

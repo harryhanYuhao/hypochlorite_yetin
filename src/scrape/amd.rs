@@ -15,6 +15,31 @@ use thirtyfour::{
 };
 use url::Url;
 
+pub async fn scrape(driver: &WebDriver) -> Result<(), Box<dyn Error>> {
+    let config = crate::CONFIG.lock().unwrap();
+    let amd_urls = vec![
+        AmdUrl{
+            country_code: "CN".to_string(),
+            url: "https://careers.amd.com/careers-home/jobs?page=1&location=china%20&woe=12&stretchUnit=MILES&stretch=10&sortBy=relevance&limit=100".to_string(),
+            save_to: format!("{}/amd_cn.csv", config.raw_data_dir),
+        },
+        AmdUrl{
+            country_code: "GB".to_string(),
+            url: "https://careers.amd.com/careers-home/jobs?page=1&location=united%20kingdom&woe=1&stretchUnit=MILES&stretch=10&sortBy=relevance&limit=100".to_string(),
+            save_to: format!("{}/amd_gb.csv", config.raw_data_dir),
+        },
+    ];
+
+    for i in amd_urls {
+        scrape_site(
+        driver,
+        &i,
+    )
+    .await?
+    }
+    Ok(())
+}
+
 struct AmdUrl {
     country_code: String,
     url: String,
@@ -44,29 +69,6 @@ async fn job_entry_from_elementid(
     })
 }
 
-pub async fn scrape_amd_job(driver: &WebDriver) -> Result<(), Box<dyn Error>> {
-    let amd_urls = vec![
-        AmdUrl{
-            country_code: "CN".to_string(),
-            url: "https://careers.amd.com/careers-home/jobs?page=1&location=china%20&woe=12&stretchUnit=MILES&stretch=10&sortBy=relevance&limit=100".to_string(),
-            save_to: "data/amd_cn.csv".to_string(),
-        },
-        AmdUrl{
-            country_code: "GB".to_string(),
-            url: "https://careers.amd.com/careers-home/jobs?page=1&location=united%20kingdom&woe=1&stretchUnit=MILES&stretch=10&sortBy=relevance&limit=100".to_string(),
-            save_to: "data/amd_gb.csv".to_string(),
-        },
-    ];
-
-    for i in amd_urls {
-        scrape_site(
-        driver,
-        &i,
-    )
-    .await?
-    }
-    Ok(())
-}
 
 async fn scrape_site(
     driver: &WebDriver,
