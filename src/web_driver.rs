@@ -11,6 +11,7 @@ use std::sync::Mutex;
 static CHILD: Mutex<Option<Child>> = Mutex::new(None);
 
 pub struct KillChildGuard;
+
 impl Drop for KillChildGuard {
     fn drop(&mut self) {
         let child = CHILD.lock().unwrap().take();
@@ -39,9 +40,16 @@ fn run_chrome_driver() {
     }
 }
 
+pub enum UseCustomDriver {
+    Yes,
+    No,
+}
+
 /// Initialize and run the driver
 /// This function shall only be called once
-pub async fn initialize_driver(use_custom_driver: bool) -> Result<WebDriver, Box<dyn Error>> {
+pub async fn initialize_driver(
+    use_custom_driver: UseCustomDriver,
+) -> Result<WebDriver, Box<dyn Error>> {
     static HAS_RUN: Mutex<Option<bool>> = Mutex::new(Some(false));
     let mut has_run = HAS_RUN.lock().unwrap();
     {
@@ -52,8 +60,14 @@ pub async fn initialize_driver(use_custom_driver: bool) -> Result<WebDriver, Box
     }
     *has_run = Some(true);
 
-    if !use_custom_driver {
-        run_chrome_driver();
+    match use_custom_driver {
+        UseCustomDriver::Yes => {
+            println!("Using Custom Chrome Driver");
+        }
+        UseCustomDriver::No => {
+            println!("Using Default Chrome Driver: Booting up Driver");
+            run_chrome_driver();
+        }
     }
 
     let caps = DesiredCapabilities::chrome();
