@@ -1,28 +1,23 @@
-use std::process::{self, Command};
-
-use serde::Serialize;
 use std::error::Error;
-use std::thread;
-use std::time::Duration;
+use std::process::{Child, Command};
 use thirtyfour::{
     prelude::{ElementWaitable, WebDriverError},
     By, DesiredCapabilities, WebDriver, WebElement,
 };
-use url::Url;
 
 use colored::Colorize;
 use std::sync::Mutex;
 
-// TODO: Remove unsafe code.
-// https://stackoverflow.com/questions/78268471/rust-kill-stdprocessschild-after-finishing-executing
-static mut CHILD_PROCESS_ID: i32 = 0;
+static CHILD: Mutex<Option<Child>> = Mutex::new(None);
 
-// static DRIVER: Mutex<Option<WebDriver>> = Mutex::new(None);
-
-extern "C" fn kill_child() {
-    unsafe {
-        let pid: libc::pid_t = CHILD_PROCESS_ID;
-        libc::kill(pid, libc::SIGKILL);
+pub struct KillChildGuard;
+impl Drop for KillChildGuard {
+    fn drop(&mut self) {
+        let child = CHILD.lock().unwrap().take();
+        if let Some(mut child) = child {
+            println!("Killing ChromeDriver ... ");
+            child.kill().expect("failed to kill");
+        }
     }
 }
 
@@ -33,14 +28,7 @@ fn run_chrome_driver() {
         let child = Command::new("./chromedriver")
             .spawn()
             .expect("Failed To Run Chromedriver");
-        unsafe {
-            let id: i32 = child
-                .id()
-                .try_into()
-                .expect("Failure converting u32 to i32 in web_driver::run_chrome_driver()");
-            CHILD_PROCESS_ID = id;
-            libc::atexit(kill_child);
-        }
+        *CHILD.lock().unwrap() = Some(child);
     } else {
         panic!(
             "{}\n{}\n{}",
@@ -52,8 +40,19 @@ fn run_chrome_driver() {
 }
 
 /// Initialize and run the driver
-pub async fn initialize_driver(auto_run_driver: bool) -> Result<WebDriver, WebDriverError> {
-    if auto_run_driver {
+/// This function shall only be called once
+pub async fn initialize_driver(use_custom_driver: bool) -> Result<WebDriver, Box<dyn Error>> {
+    static HAS_RUN: Mutex<Option<bool>> = Mutex::new(Some(false));
+    let mut has_run = HAS_RUN.lock().unwrap();
+    {
+        if *has_run.as_ref().unwrap() {
+            println!("Already Run!!!");
+            return Err("Bad!".into());
+        }
+    }
+    *has_run = Some(true);
+
+    if !use_custom_driver {
         run_chrome_driver();
     }
 

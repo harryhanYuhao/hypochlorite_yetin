@@ -1,4 +1,6 @@
+pub mod amd;
 pub mod huawei;
+use rand::Rng;
 use serde::Serialize;
 use std::error::Error;
 use std::thread;
@@ -22,4 +24,49 @@ pub async fn raw_scrape(url: &str) -> Result<String, Box<dyn Error>> {
     let body = response.text().await?;
 
     Ok(body)
+}
+
+pub fn long_pause() {
+    thread::sleep(Duration::from_millis(
+        rand::thread_rng().gen_range(2000..3000),
+    ));
+}
+
+pub fn medium_pause() {
+    thread::sleep(Duration::from_millis(
+        rand::thread_rng().gen_range(1000..2000),
+    ));
+}
+
+pub fn short_pause() {
+    thread::sleep(Duration::from_millis(
+        rand::thread_rng().gen_range(300..600),
+    ));
+}
+
+pub async fn scroll_to_bottom(driver: &WebDriver) -> Result<(), WebDriverError> {
+    driver
+        .execute(
+            r#"window.scrollTo({
+  top: document.body.scrollHeight,
+  left: 100,
+  behavior: "smooth",
+});"#,
+            vec![],
+        )
+        .await?;
+    short_pause();
+    Ok(())
+}
+
+pub async fn scroll_into_view(
+    driver: &WebDriver,
+    element: &WebElement,
+) -> Result<(), WebDriverError> {
+    println!("Scrolling into view...");
+    driver.execute(
+        r#"arguments[0].scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+        "#, vec![element.to_json()?]
+    ).await?;
+    Ok(())
 }
