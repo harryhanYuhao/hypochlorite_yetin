@@ -18,6 +18,7 @@ use url::Url;
 struct AmdUrl {
     country_code: String,
     url: String,
+    save_to: String,
 }
 
 async fn job_entry_from_elementid(
@@ -27,7 +28,7 @@ async fn job_entry_from_elementid(
     let title_selector = format!("#link-job-{} > span", id);
     let link_selector = format!("#link-job-{}", id);
     let title = driver.find(By::Css(&title_selector)).await?.text().await?;
-    println!("Title: {}", title);
+    println!("Scraping: {}", title);
     let url = driver
         .find(By::Css(&link_selector))
         .await?
@@ -48,53 +49,57 @@ pub async fn scrape_amd_job(driver: &WebDriver) -> Result<(), Box<dyn Error>> {
         AmdUrl{
             country_code: "CN".to_string(),
             url: "https://careers.amd.com/careers-home/jobs?page=1&location=china%20&woe=12&stretchUnit=MILES&stretch=10&sortBy=relevance&limit=100".to_string(),
+            save_to: "data/amd_cn.csv".to_string(),
         },
         AmdUrl{
             country_code: "GB".to_string(),
             url: "https://careers.amd.com/careers-home/jobs?page=1&location=united%20kingdom&woe=1&stretchUnit=MILES&stretch=10&sortBy=relevance&limit=100".to_string(),
+            save_to: "data/amd_gb.csv".to_string(),
         },
     ];
-    scrape_site(
+
+    for i in amd_urls {
+        scrape_site(
         driver,
-        "https://careers.amd.com/careers-home/jobs?page=1&location=china%20&woe=12&stretchUnit=MILES&stretch=10&sortBy=relevance&limit=100",
-        "data/amd_cn.csv",
+        &i,
     )
-    .await
+    .await?
+    }
+    Ok(())
 }
 
 async fn scrape_site(
     driver: &WebDriver,
-    url: &str,
-    save_to: &str,
+    amd_url: &AmdUrl,
 ) -> Result<(), Box<dyn Error>> {
-    let url_tmp = Url::parse(url)?;
+    let url_tmp = Url::parse(&amd_url.url)?;
     driver.goto(url_tmp).await?;
-    println!("{} at {}", "Scraping AMD job".yellow().bold(), url);
+    println!("{} at {}", "Scraping AMD job".yellow().bold(), amd_url.url);
     long_pause();
 
     // clicking the popup menu of cookies permission
     click_popup(driver).await?;
     short_pause();
 
-    //
+    let mut wtr = csv::Writer::from_path(&amd_url.save_to)?;
     scroll_to_bottom(driver).await?;
     short_pause();
-    let mut wtr = csv::Writer::from_path(save_to)?;
-    record_entry_to_csv(driver, &mut wtr).await?;
+    record_entry_to_csv(driver, &mut wtr, &amd_url).await?;
     while next_page_button_exists_or_clickable(driver).await? {
         long_pause();
         click_next_page_button(driver).await?;
         medium_pause();
         scroll_to_bottom(driver).await?;
         short_pause();
-        record_entry_to_csv(driver, &mut wtr).await?;
+        record_entry_to_csv(driver, &mut wtr, &amd_url).await?;
     }
 
     Ok(())
 }
 
 /// There will be popup menu asking for cookies permission
-/// This function will click "only allow necessary cookies"
+/// This function will click "only allow necessary cookies",
+/// and if no pop-up, do nothing
 async fn click_popup(driver: &WebDriver) -> Result<(), Box<dyn Error>> {
     if let Ok(popup_menu_ok_button) = driver
         .find(By::XPath(
@@ -153,12 +158,13 @@ async fn next_page_button_exists_or_clickable(driver: &WebDriver) -> Result<bool
 async fn record_entry_to_csv(
     driver: &WebDriver,
     wtr: &mut csv::Writer<std::fs::File>,
+    amd_url: &AmdUrl,
 ) -> Result<(), Box<dyn Error>> {
     let all_entry = get_all_entry(driver).await?;
     println!("There are {} entries", all_entry.len());
     for id in 0..all_entry.len() {
         if let Ok(mut tmp) = job_entry_from_elementid(driver, id).await {
-            tmp.location = "CN".to_string();
+            tmp.location = amd_url.country_code.clone();
             tmp.company_name = "Amd".to_string();
             wtr.serialize(tmp)?;
         }
