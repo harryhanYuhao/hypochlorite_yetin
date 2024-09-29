@@ -67,6 +67,8 @@ pub async fn initialize_driver(
         UseCustomDriver::No => {
             println!("Using Default Chrome Driver: Booting up Driver");
             run_chrome_driver();
+            // Wait for the driver to boot up
+            crate::scrape::short_pause();
         }
     }
 

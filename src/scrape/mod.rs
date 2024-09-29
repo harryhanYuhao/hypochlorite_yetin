@@ -1,5 +1,6 @@
 pub mod amd;
 pub mod huawei;
+pub mod airbnb;
 use rand::Rng;
 use serde::Serialize;
 use std::error::Error;

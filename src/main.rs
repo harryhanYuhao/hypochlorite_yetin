@@ -20,8 +20,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let driver = web_driver::initialize_driver(web_driver::UseCustomDriver::No).await?;
 
     scrape::short_pause();
-    scrape::huawei::scrape(&driver).await?;
-    scrape::amd::scrape(&driver).await?;
+    // scrape::huawei::scrape(&driver).await?;
+    // scrape::amd::scrape(&driver).await?;
+    scrape::airbnb::scrape(&driver).await?;
     driver.quit().await?;
     Ok(())
 }

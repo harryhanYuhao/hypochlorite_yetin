@@ -12,10 +12,11 @@ use thirtyfour::{
 };
 use url::Url;
 
-
 pub async fn scrape(driver: &WebDriver) -> Result<(), Box<dyn Error>> {
-    let config = crate::CONFIG.lock().unwrap();
-    let save_to = format!("{}/huawei_gb.csv", config.raw_data_dir);
+    let save_to = format!(
+        "{}huawei_gb.csv",
+        crate::CONFIG.lock().unwrap().raw_data_dir
+    );
     scrape_site_uk(
         driver,
         "https://huaweiuk.teamtailor.com/jobs",
