@@ -58,14 +58,15 @@ pub fn init() -> Result<(), Box<dyn Error>> {
     if !std::path::Path::new(&config.raw_data_dir).exists() {
         std::fs::create_dir_all(&config.raw_data_dir)?;
     }
-    if !std::path::Path::new("chromedriver").exists() {
-        panic!(
-            "{}\n{}\n{}\n{}",
-            "Chrome Driver does not exist!",
-            "Download The Chrome Driver!".red().bold(),
-            "This in unrecoverable error.",
-            "Please Download the Chrome Driver with the same version as your browser. See readme.md"
-        );
-    }
+    // TODO: automatic run chromedriver: new feature to be added
+    // if !std::path::Path::new("chromedriver").exists() {
+    //     panic!(
+    //         "{}\n{}\n{}\n{}",
+    //         "Chrome Driver does not exist!",
+    //         "Download The Chrome Driver!".red().bold(),
+    //         "This in unrecoverable error.",
+    //         "Please Download the Chrome Driver with the same version as your browser. See readme.md"
+    //     );
+    // }
     Ok(())
 }

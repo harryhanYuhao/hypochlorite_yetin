@@ -1,6 +1,7 @@
+pub mod airbnb;
 pub mod amd;
 pub mod huawei;
-pub mod airbnb;
+pub mod shggzy;
 use rand::Rng;
 use serde::Serialize;
 use std::error::Error;
@@ -25,6 +26,12 @@ pub async fn raw_scrape(url: &str) -> Result<String, Box<dyn Error>> {
     let body = response.text().await?;
 
     Ok(body)
+}
+
+pub fn undefinite_pause() {
+    loop {
+        thread::sleep(Duration::from_millis(1000));
+    }
 }
 
 pub fn long_pause() {
@@ -69,5 +76,23 @@ pub async fn scroll_into_view(
         r#"arguments[0].scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
         "#, vec![element.to_json()?]
     ).await?;
+    Ok(())
+}
+
+pub async fn swith_to_tab(driver: &WebDriver, num: usize) -> Result<(), WebDriverError> {
+    let handles = driver.windows().await?;
+    driver.switch_to_window(handles[num].clone()).await?;
+    
+    Ok(())
+}
+
+pub async fn wait_until_loaded(driver: &WebDriver) -> Result<(), Box<dyn Error>> {
+    driver
+        .find(By::XPath("/html/body"))
+        .await?
+        .wait_until()
+        .displayed()
+        .await?;
+
     Ok(())
 }

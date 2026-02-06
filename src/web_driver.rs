@@ -66,9 +66,10 @@ pub async fn initialize_driver(
         }
         UseCustomDriver::No => {
             println!("Using Default Chrome Driver: Booting up Driver");
-            run_chrome_driver();
+            // TODO: add automatic run chromedriver feature
+            // run_chrome_driver();
             // Wait for the driver to boot up
-            crate::scrape::short_pause();
+            // crate::scrape::short_pause();
         }
     }
 
@@ -83,6 +84,7 @@ pub async fn initialize_driver(
                     .red()
             )
         });
-    driver.maximize_window().await?;
+    // WARNING: does not seem to work in hyprland
+    // driver.maximize_window().await?;
     Ok(driver)
 }

@@ -19,10 +19,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let _kill_guard = web_driver::KillChildGuard;
     let driver = web_driver::initialize_driver(web_driver::UseCustomDriver::No).await?;
 
-    scrape::short_pause();
+    // scrape::short_pause();
     // scrape::huawei::scrape(&driver).await?;
     // scrape::amd::scrape(&driver).await?;
-    scrape::airbnb::scrape(&driver).await?;
+    // scrape::airbnb::scrape(&driver).await?;
+    scrape::shggzy::scrape(&driver).await?;
     driver.quit().await?;
     Ok(())
 }
